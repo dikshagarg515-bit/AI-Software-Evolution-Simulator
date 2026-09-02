@@ -2,17 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from analyzer.core.repository_scanner import scan_repository
+from backend.app.config import FRONTEND_URLS, PROJECT_NAME
 
 
-app = FastAPI(title="AI Software Evolution Simulator")
+app = FastAPI(title=PROJECT_NAME)
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-    ],
+    allow_origins=FRONTEND_URLS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
