@@ -10,10 +10,16 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [selectedFile, setSelectedFile] = useState("");
+  const [impactResult, setImpactResult] = useState(null);
+  const [impactLoading, setImpactLoading] = useState(false);
+
   const analyzeRepository = async () => {
     setLoading(true);
     setError("");
     setResult(null);
+    setImpactResult(null);
+    setSelectedFile("");
 
     try {
       const response = await fetch(
@@ -26,10 +32,47 @@ function App() {
 
       const data = await response.json();
       setResult(data);
+
+      if (data.files.length > 0) {
+        setSelectedFile(
+          data.files[0].path
+            .replaceAll("\\", "/")
+            .replace(`${data.path.replaceAll("\\", "/")}/`, "")
+        );
+      }
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const analyzeImpact = async () => {
+    if (!selectedFile) {
+      return;
+    }
+
+    setImpactLoading(true);
+    setError("");
+    setImpactResult(null);
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/impact?path=${encodeURIComponent(
+          path
+        )}&file=${encodeURIComponent(selectedFile)}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to analyze impact");
+      }
+
+      const data = await response.json();
+      setImpactResult(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setImpactLoading(false);
     }
   };
 
@@ -50,6 +93,23 @@ function App() {
 
   const pythonFiles =
     result?.files?.filter((file) => file.language === "Python").length || 0;
+
+  const getShortPath = (filePath) => {
+    if (!result?.path) {
+      return filePath;
+    }
+
+    const normalizedRoot = result.path.replaceAll("\\", "/");
+    const normalizedFile = filePath.replaceAll("\\", "/");
+
+    if (normalizedFile.startsWith(normalizedRoot)) {
+      return normalizedFile
+        .replace(normalizedRoot, "")
+        .replace(/^\/+/, "");
+    }
+
+    return filePath;
+  };
 
   return (
     <div className="app">
@@ -111,7 +171,8 @@ function App() {
               {result.files.map((file) => (
                 <div className="file-card" key={file.path}>
                   <div>
-                    <h3>{file.path}</h3>
+                    <h3>{getShortPath(file.path)}</h3>
+
                     <p>
                       {file.language} • {file.lines} lines
                     </p>
@@ -133,6 +194,125 @@ function App() {
                 </div>
               ))}
             </div>
+          </section>
+
+          <section className="dependency-section">
+            <h2>Dependency Graph</h2>
+
+            <p className="section-description">
+              This shows how files in the repository depend on one another.
+            </p>
+
+            <div className="dependency-list">
+              {Object.entries(result.dependency_graph).map(
+                ([source, dependencies]) => (
+                  <div className="dependency-row" key={source}>
+                    <div className="dependency-node source-node">
+                      {getShortPath(source)}
+                    </div>
+
+                    <div className="dependency-arrow">
+                      →
+                    </div>
+
+                    <div className="dependency-targets">
+                      {dependencies.length > 0 ? (
+                        dependencies.map((dependency) => (
+                          <div
+                            className="dependency-node target-node"
+                            key={dependency}
+                          >
+                            {getShortPath(dependency)}
+                          </div>
+                        ))
+                      ) : (
+                        <span className="no-dependency">
+                          No internal dependencies
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          </section>
+
+          <section className="impact-section">
+            <h2>Impact Analysis</h2>
+
+            <p className="section-description">
+              Select a file to discover which other files could be affected
+              if it changes.
+            </p>
+
+            <div className="impact-controls">
+              <select
+                value={selectedFile}
+                onChange={(e) => {
+                  setSelectedFile(e.target.value);
+                  setImpactResult(null);
+                }}
+              >
+                {result.files.map((file) => (
+                  <option
+                    key={file.path}
+                    value={getShortPath(file.path)}
+                  >
+                    {getShortPath(file.path)}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={analyzeImpact}
+                disabled={impactLoading || !selectedFile}
+              >
+                {impactLoading
+                  ? "Analyzing Impact..."
+                  : "Analyze Impact"}
+              </button>
+            </div>
+
+            {impactResult && (
+              <div className="impact-results">
+                <div className="impact-count">
+                  <span>Impact Count</span>
+                  <strong>{impactResult.impact_count}</strong>
+                </div>
+
+                <div className="impact-group">
+                  <h3>Direct Dependents</h3>
+
+                  {impactResult.direct_dependents.length > 0 ? (
+                    <ul>
+                      {impactResult.direct_dependents.map((file) => (
+                        <li key={file}>
+                          {getShortPath(file)}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No files directly depend on this file.</p>
+                  )}
+                </div>
+
+                <div className="impact-group">
+                  <h3>All Potentially Affected Files</h3>
+
+                  {impactResult.all_affected_files.length > 0 ? (
+                    <ul>
+                      {impactResult.all_affected_files.map((file) => (
+                        <li key={file}>
+                          {getShortPath(file)}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No affected files found.</p>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
         </>
       )}

@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from analyzer.core.impact_analysis import find_impact
+from analyzer.core.dependency_graph import build_dependency_graph
 from analyzer.core.repository_scanner import scan_repository
 from backend.app.config import FRONTEND_URLS, PROJECT_NAME
 
@@ -27,5 +29,22 @@ def root():
 @app.get("/analyze")
 def analyze_repository(path: str):
     repository = scan_repository(path)
+    dependency_graph = build_dependency_graph(repository)
 
-    return repository.to_dict()
+    result = repository.to_dict()
+    result["dependency_graph"] = dependency_graph
+
+    return result
+@app.get("/impact")
+def analyze_impact(path: str, file: str):
+    repository = scan_repository(path)
+    dependency_graph = build_dependency_graph(repository)
+
+    target_file = (repository.path + "\\" + file).replace("/", "\\")
+
+    impact = find_impact(
+        dependency_graph,
+        target_file,
+    )
+
+    return impact
