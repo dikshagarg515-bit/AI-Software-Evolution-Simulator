@@ -177,7 +177,7 @@
 
 .metric-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
   align-items: center;
   gap: 16px;
   padding: 16px;
@@ -223,5 +223,67 @@
 
   .metric-file {
     grid-column: 1 / -1;
+  }
+}
+.ranking-section {
+  margin-top: 50px;
+}
+
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.ranking-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 100px;
+  align-items: center;
+  gap: 20px;
+  padding: 18px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+
+.ranking-position {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.ranking-file {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ranking-file strong {
+  word-break: break-word;
+}
+
+.ranking-file span {
+  font-size: 13px;
+  color: #777;
+}
+
+.ranking-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ranking-score span {
+  font-size: 13px;
+}
+
+.ranking-score strong {
+  font-size: 26px;
+}
+
+@media (max-width: 600px) {
+  .ranking-row {
+    grid-template-columns: 50px 1fr 70px;
+    gap: 10px;
   }
 }

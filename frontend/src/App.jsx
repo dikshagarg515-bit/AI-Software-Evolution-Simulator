@@ -269,6 +269,44 @@ function App() {
             <span>Connections</span>
             <strong>{metrics.total_connections}</strong>
           </div>
+          <div className="metric-value">
+  <span>Hotspot</span>
+  <strong>{metrics.hotspot_level}</strong>
+</div>
+        </div>
+      ))}
+  </div>
+</section>
+<section className="ranking-section">
+  <h2>Top Architectural Components</h2>
+
+  <p className="section-description">
+    These components have the highest connectivity within the repository.
+  </p>
+
+  <div className="ranking-list">
+    {result.hotspot_ranking
+      .filter((item) => item.hotspot_score > 0)
+      .slice(0, 5)
+      .map((item, index) => (
+        <div className="ranking-row" key={item.file}>
+          <div className="ranking-position">
+            #{index + 1}
+          </div>
+
+          <div className="ranking-file">
+            <strong>{getShortPath(item.file)}</strong>
+
+            <span>
+              {item.dependencies} dependencies •{" "}
+              {item.dependents} dependents
+            </span>
+          </div>
+
+          <div className="ranking-score">
+            <span>{item.hotspot_level}</span>
+            <strong>{item.hotspot_score}</strong>
+          </div>
         </div>
       ))}
   </div>

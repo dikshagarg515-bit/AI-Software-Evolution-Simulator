@@ -25,4 +25,36 @@ def calculate_dependency_metrics(
             + values["dependents"]
         )
 
+        values["hotspot_score"] = values["total_connections"]
+
+        if values["hotspot_score"] >= 4:
+            values["hotspot_level"] = "High"
+        elif values["hotspot_score"] >= 2:
+            values["hotspot_level"] = "Medium"
+        else:
+            values["hotspot_level"] = "Low"
+
     return metrics
+def rank_architectural_hotspots(
+    dependency_metrics: dict[str, dict],
+) -> list[dict]:
+    ranked = []
+
+    for file_path, metrics in dependency_metrics.items():
+        ranked.append(
+            {
+                "file": file_path,
+                "hotspot_score": metrics["hotspot_score"],
+                "hotspot_level": metrics["hotspot_level"],
+                "dependencies": metrics["dependencies"],
+                "dependents": metrics["dependents"],
+                "total_connections": metrics["total_connections"],
+            }
+        )
+
+    ranked.sort(
+        key=lambda item: item["hotspot_score"],
+        reverse=True,
+    )
+
+    return ranked
