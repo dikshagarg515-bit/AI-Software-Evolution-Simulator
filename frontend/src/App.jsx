@@ -236,6 +236,43 @@ function App() {
               )}
             </div>
           </section>
+          <section className="metrics-section">
+  <h2>Dependency Metrics</h2>
+
+  <p className="section-description">
+    These metrics show how connected each file is within the repository.
+  </p>
+
+  <div className="metrics-list">
+    {Object.entries(result.dependency_metrics)
+      .sort(
+        ([, a], [, b]) =>
+          b.total_connections - a.total_connections
+      )
+      .map(([file, metrics]) => (
+        <div className="metric-row" key={file}>
+          <div className="metric-file">
+            {getShortPath(file)}
+          </div>
+
+          <div className="metric-value">
+            <span>Dependencies</span>
+            <strong>{metrics.dependencies}</strong>
+          </div>
+
+          <div className="metric-value">
+            <span>Dependents</span>
+            <strong>{metrics.dependents}</strong>
+          </div>
+
+          <div className="metric-value">
+            <span>Connections</span>
+            <strong>{metrics.total_connections}</strong>
+          </div>
+        </div>
+      ))}
+  </div>
+</section>
 
           <section className="impact-section">
             <h2>Impact Analysis</h2>
