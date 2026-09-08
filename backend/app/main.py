@@ -7,6 +7,7 @@ from analyzer.core.dependency_metrics import (
     calculate_dependency_metrics,
     rank_architectural_hotspots,
 )
+from analyzer.core.evolution_engine import simulate_change
 from analyzer.core.repository_scanner import scan_repository
 from backend.app.config import FRONTEND_URLS, PROJECT_NAME
 
@@ -62,3 +63,28 @@ def analyze_impact(path: str, file: str):
     )
 
     return impact
+@app.get("/simulate")
+def simulate_repository_change(path: str, file: str):
+    repository = scan_repository(path)
+    dependency_graph = build_dependency_graph(repository)
+
+    dependency_metrics = calculate_dependency_metrics(
+        dependency_graph
+    )
+
+    target_file = (
+        repository.path + "\\" + file
+    ).replace("/", "\\")
+
+    impact_result = find_impact(
+        dependency_graph,
+        target_file,
+    )
+
+    simulation = simulate_change(
+        target_file,
+        impact_result,
+        dependency_metrics,
+    )
+
+    return simulation

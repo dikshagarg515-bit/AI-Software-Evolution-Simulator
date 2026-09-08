@@ -287,3 +287,84 @@
     gap: 10px;
   }
 }
+.simulation-section {
+  margin-top: 50px;
+  padding-bottom: 80px;
+}
+
+.simulation-controls {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.simulation-controls select {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 15px;
+  background: #1a1a1f;
+  color: white;
+}
+
+.simulation-controls select option {
+  background: white;
+  color: black;
+}
+
+.simulation-controls button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.simulation-results {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.simulation-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.simulation-summary > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+
+.simulation-summary span {
+  font-size: 13px;
+  color: #777;
+}
+
+.simulation-summary strong {
+  font-size: 24px;
+}
+
+@media (max-width: 800px) {
+  .simulation-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 500px) {
+  .simulation-controls {
+    flex-direction: column;
+  }
+
+  .simulation-summary {
+    grid-template-columns: 1fr;
+  }
+}

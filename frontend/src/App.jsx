@@ -14,6 +14,9 @@ function App() {
   const [impactResult, setImpactResult] = useState(null);
   const [impactLoading, setImpactLoading] = useState(false);
 
+  const [simulationResult, setSimulationResult] = useState(null);
+const [simulationLoading, setSimulationLoading] = useState(false);
+
   const analyzeRepository = async () => {
     setLoading(true);
     setError("");
@@ -75,6 +78,34 @@ function App() {
       setImpactLoading(false);
     }
   };
+  const simulateEvolution = async () => {
+  if (!selectedFile) {
+    return;
+  }
+
+  setSimulationLoading(true);
+  setError("");
+  setSimulationResult(null);
+
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:8000/simulate?path=${encodeURIComponent(
+        path
+      )}&file=${encodeURIComponent(selectedFile)}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to simulate change");
+    }
+
+    const data = await response.json();
+    setSimulationResult(data);
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setSimulationLoading(false);
+  }
+};
 
   const totalLines =
     result?.files?.reduce((sum, file) => sum + file.lines, 0) || 0;
@@ -389,6 +420,84 @@ function App() {
               </div>
             )}
           </section>
+          <section className="simulation-section">
+  <h2>Evolution Simulation</h2>
+
+  <p className="section-description">
+    Simulate a change to a component and estimate its structural impact.
+  </p>
+
+  <div className="simulation-controls">
+    <select
+      value={selectedFile}
+      onChange={(e) => {
+        setSelectedFile(e.target.value);
+        setImpactResult(null);
+        setSimulationResult(null);
+      }}
+    >
+      {result.files.map((file) => (
+        <option
+          key={file.path}
+          value={getShortPath(file.path)}
+        >
+          {getShortPath(file.path)}
+        </option>
+      ))}
+    </select>
+
+    <button
+      onClick={simulateEvolution}
+      disabled={simulationLoading || !selectedFile}
+    >
+      {simulationLoading
+        ? "Simulating..."
+        : "Simulate Change"}
+    </button>
+  </div>
+
+  {simulationResult && (
+    <div className="simulation-results">
+      <div className="simulation-summary">
+        <div>
+          <span>Risk Level</span>
+          <strong>{simulationResult.risk_level}</strong>
+        </div>
+
+        <div>
+          <span>Risk Score</span>
+          <strong>{simulationResult.risk_score}</strong>
+        </div>
+
+        <div>
+          <span>Impact Count</span>
+          <strong>{simulationResult.impact_count}</strong>
+        </div>
+
+        <div>
+          <span>Hotspot Score</span>
+          <strong>{simulationResult.hotspot_score}</strong>
+        </div>
+      </div>
+
+      <div className="impact-group">
+        <h3>Potentially Affected Components</h3>
+
+        {simulationResult.all_affected_files.length > 0 ? (
+          <ul>
+            {simulationResult.all_affected_files.map((file) => (
+              <li key={file}>
+                {getShortPath(file)}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No potentially affected components found.</p>
+        )}
+      </div>
+    </div>
+  )}
+</section>
         </>
       )}
     </div>
