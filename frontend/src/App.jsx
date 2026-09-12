@@ -15,7 +15,8 @@ function App() {
   const [impactLoading, setImpactLoading] = useState(false);
 
   const [simulationResult, setSimulationResult] = useState(null);
-const [simulationLoading, setSimulationLoading] = useState(false);
+  const [simulationLoading, setSimulationLoading] = useState(false);
+const [changeType, setChangeType] = useState("modify_function");
 
   const analyzeRepository = async () => {
     setLoading(true);
@@ -89,10 +90,12 @@ const [simulationLoading, setSimulationLoading] = useState(false);
 
   try {
     const response = await fetch(
-      `http://127.0.0.1:8000/simulate?path=${encodeURIComponent(
-        path
-      )}&file=${encodeURIComponent(selectedFile)}`
-    );
+  `http://127.0.0.1:8000/simulate?path=${encodeURIComponent(
+    path
+  )}&file=${encodeURIComponent(selectedFile)}&change_type=${encodeURIComponent(
+    changeType
+  )}`
+);
 
     if (!response.ok) {
       throw new Error("Failed to simulate change");
@@ -428,6 +431,33 @@ const [simulationLoading, setSimulationLoading] = useState(false);
   </p>
 
   <div className="simulation-controls">
+  <select
+  value={changeType}
+  onChange={(e) => {
+    setChangeType(e.target.value);
+    setSimulationResult(null);
+  }}
+>
+  <option value="modify_function">
+    Modify Function
+  </option>
+
+  <option value="add_function">
+    Add Function
+  </option>
+
+  <option value="remove_function">
+    Remove Function
+  </option>
+
+  <option value="change_dependency">
+    Change Dependency
+  </option>
+
+  <option value="change_api">
+    Change API
+  </option>
+</select>
     <select
       value={selectedFile}
       onChange={(e) => {

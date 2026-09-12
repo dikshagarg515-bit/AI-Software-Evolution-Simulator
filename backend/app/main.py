@@ -64,7 +64,11 @@ def analyze_impact(path: str, file: str):
 
     return impact
 @app.get("/simulate")
-def simulate_repository_change(path: str, file: str):
+def simulate_repository_change(
+    path: str,
+    file: str,
+    change_type: str = "modify_function",
+):
     repository = scan_repository(path)
     dependency_graph = build_dependency_graph(repository)
 
@@ -85,6 +89,7 @@ def simulate_repository_change(path: str, file: str):
         target_file,
         impact_result,
         dependency_metrics,
+        change_type,
     )
 
     return simulation
