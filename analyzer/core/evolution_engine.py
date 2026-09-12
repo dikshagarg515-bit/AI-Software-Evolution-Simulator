@@ -54,6 +54,30 @@ def simulate_change(
     else:
         risk_level = "Low"
 
+    if risk_level == "High":
+        risk_explanation = (
+            f"This {change_type.replace('_', ' ')} is considered high risk "
+            f"because the target component affects {impact_count} other "
+            f"files and has a hotspot score of {hotspot_score}. "
+            f"The selected change type adds {change_weight} additional "
+            f"risk points."
+        )
+
+    elif risk_level == "Medium":
+        risk_explanation = (
+            f"This {change_type.replace('_', ' ')} has moderate risk "
+            f"because the target component affects {impact_count} other "
+            f"files and has a hotspot score of {hotspot_score}. "
+            f"The selected change type adds {change_weight} additional "
+            f"risk points."
+        )
+
+    else:
+        risk_explanation = (
+            f"This {change_type.replace('_', ' ')} has low structural risk "
+            f"because the target component has limited dependency impact."
+        )
+
     return {
         "target_file": target_file,
         "change_type": change_type,
@@ -66,6 +90,7 @@ def simulate_change(
         "change_weight": change_weight,
         "risk_score": risk_score,
         "risk_level": risk_level,
+        "risk_explanation": risk_explanation,
         "direct_dependents": impact_result["direct_dependents"],
         "all_affected_files": impact_result["all_affected_files"],
     }

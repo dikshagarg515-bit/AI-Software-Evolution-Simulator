@@ -368,3 +368,19 @@
     grid-template-columns: 1fr;
   }
 }
+.risk-explanation {
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+}
+
+.risk-explanation h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.risk-explanation p {
+  margin: 0;
+  line-height: 1.6;
+  color: #555;
+}

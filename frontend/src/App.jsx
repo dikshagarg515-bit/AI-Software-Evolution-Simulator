@@ -509,9 +509,16 @@ const [changeType, setChangeType] = useState("modify_function");
           <strong>{simulationResult.hotspot_score}</strong>
         </div>
       </div>
+      
 
-      <div className="impact-group">
-        <h3>Potentially Affected Components</h3>
+      <div className="risk-explanation">
+  <h3>Why is this change risky?</h3>
+
+  <p>{simulationResult.risk_explanation}</p>
+</div>
+
+<div className="impact-group">
+  <h3>Potentially Affected Components</h3>
 
         {simulationResult.all_affected_files.length > 0 ? (
           <ul>
