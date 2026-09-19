@@ -9,6 +9,7 @@ from analyzer.core.dependency_metrics import (
 )
 from analyzer.core.evolution_engine import simulate_change
 from analyzer.core.repository_scanner import scan_repository
+from analyzer.core.ai_reasoning import build_reasoning_prompt
 from backend.app.config import FRONTEND_URLS, PROJECT_NAME
 
 
@@ -91,5 +92,8 @@ def simulate_repository_change(
         dependency_metrics,
         change_type,
     )
+    reasoning_prompt = build_reasoning_prompt(simulation)
+
+    simulation["reasoning_prompt"] = reasoning_prompt
 
     return simulation
