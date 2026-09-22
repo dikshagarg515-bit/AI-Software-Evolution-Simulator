@@ -1,10 +1,13 @@
+from ollama import chat
+
+
+OLLAMA_MODEL = "llama3.2:3b"
+
+
 def build_reasoning_prompt(simulation_result: dict) -> str:
     """
-    Build structured evidence for the AI reasoning layer.
-
-    The deterministic analysis engine calculates the actual
-    impact and risk values. The AI will later use this
-    information to explain the result.
+    Build the evidence-based prompt that will be sent
+    to the local AI model.
     """
 
     target_file = simulation_result.get(
@@ -89,15 +92,38 @@ Do not invent dependency relationships.
 Use only the evidence provided above.
 Clearly distinguish between confirmed structural evidence
 and possible consequences.
+
+Keep the explanation concise and practical.
 """
 
     return prompt.strip()
 
 
+def generate_ai_reasoning(simulation_result: dict) -> str:
+    """
+    Send the simulation evidence to the local Ollama model
+    and return the generated architectural explanation.
+    """
+
+    prompt = build_reasoning_prompt(simulation_result)
+
+    response = chat(
+        model=OLLAMA_MODEL,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+    )
+
+    return response["message"]["content"]
+
+
 def prepare_reasoning_input(simulation_result: dict) -> dict:
     """
-    Convert simulation results into a structured input
-    for the future AI reasoning system.
+    Convert simulation results into structured input
+    for the AI reasoning system.
     """
 
     return {
