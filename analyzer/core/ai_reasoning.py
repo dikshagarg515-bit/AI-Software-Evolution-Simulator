@@ -49,6 +49,14 @@ def build_reasoning_prompt(simulation_result: dict) -> str:
         "all_affected_files",
         [],
     )
+    direct_dependents = simulation_result.get(
+    "direct_dependents",
+    [],
+)
+    confirmed_relationships = [
+    f"{dependent} -> {target_file}"
+    for dependent in direct_dependents
+]
 
     prompt = f"""
 You are an AI software architecture assistant.
@@ -76,9 +84,21 @@ Risk score:
 Risk level:
 {risk_level}
 
-Potentially affected files:
-{affected_files}
+Confirmed dependency relationships:
 
+{confirmed_relationships}
+
+The arrow "A -> B" means:
+A depends on B.
+
+Therefore:
+- The files on the LEFT side are the dependents.
+- The target file on the RIGHT side is the dependency.
+- These relationships are confirmed by the dependency analysis.
+- Never reverse these relationships.
+
+All potentially affected files:
+{affected_files}
 Explain:
 
 1. Why this change has this level of risk.
@@ -87,13 +107,32 @@ Explain:
 4. What a developer should review before making the change.
 5. Give practical recommendations for reducing the risk.
 
-Important:
-Do not invent dependency relationships.
-Use only the evidence provided above.
-Clearly distinguish between confirmed structural evidence
-and possible consequences.
+Important rules:
 
-Keep the explanation concise and practical.
+- Use only the dependency and impact evidence provided above.
+- Do not invent or assume dependency relationships.
+- Treat the confirmed dependency relationships as factual.
+- Interpret every arrow exactly as defined: A -> B means A depends on B.
+- Never reverse an arrow.
+- Never state that the target file depends on a file appearing on the left side of an arrow.
+- The target file is the dependency when it appears on the right side of an arrow.
+- Direct dependents are confirmed relationships.
+- All other breakage or consequences must be described as potential consequences.
+- Do not change or recalculate the risk score.
+- The risk score and risk level are produced by the deterministic analysis engine.
+
+Recommendations must be specific to the software architecture evidence.
+Prefer recommendations such as:
+- reviewing the direct dependents of the changed component
+- checking API or interface compatibility
+- reviewing affected functions or classes
+- adding or updating tests for affected components
+- validating the dependency graph after the change
+- checking indirectly affected components
+
+Avoid generic business advice, deployment advice, or unrelated recommendations unless the evidence specifically supports them.
+
+Keep the explanation concise, technically accurate, and practical.
 """
 
     return prompt.strip()
