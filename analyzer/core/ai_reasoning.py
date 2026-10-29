@@ -6,23 +6,27 @@ OLLAMA_MODEL = "llama3.2:3b"
 
 def build_reasoning_prompt(simulation_result: dict) -> str:
     """
-    Build the evidence-based prompt that will be sent
-    to the local AI model.
-    """
+    Build a simple prompt for the local AI model.
 
-    target_file = simulation_result.get(
-        "target_file",
-        "Unknown file",
-    )
+    The deterministic engine is responsible for:
+    - risk score
+    - risk level
+    - impact count
+    - hotspot score
+    - dependency relationships
+
+    The AI is responsible only for explaining the risk
+    and giving practical recommendations.
+    """
 
     change_type = simulation_result.get(
         "change_type",
-        "Unknown change",
+        "unknown change",
     )
 
     change_description = simulation_result.get(
         "change_description",
-        "No description available.",
+        "No change description available.",
     )
 
     impact_count = simulation_result.get(
@@ -45,26 +49,15 @@ def build_reasoning_prompt(simulation_result: dict) -> str:
         "Unknown",
     )
 
-    affected_files = simulation_result.get(
-        "all_affected_files",
-        [],
-    )
-    direct_dependents = simulation_result.get(
-    "direct_dependents",
-    [],
-)
-    confirmed_relationships = [
-    f"{dependent} -> {target_file}"
-    for dependent in direct_dependents
-]
-
     prompt = f"""
 You are an AI software architecture assistant.
 
-Analyze the following software evolution scenario.
+Explain the results of a deterministic software evolution analysis.
 
-Target file:
-{target_file}
+The deterministic analysis engine has already calculated the
+risk information. Do not recalculate it.
+
+DETERMINISTIC RESULTS
 
 Change type:
 {change_type}
@@ -72,67 +65,63 @@ Change type:
 Change description:
 {change_description}
 
+Risk level:
+{risk_level}
+
+Risk score:
+{risk_score}
+
 Impact count:
 {impact_count}
 
 Hotspot score:
 {hotspot_score}
 
-Risk score:
-{risk_score}
 
-Risk level:
-{risk_level}
+YOUR TASK
 
-Confirmed dependency relationships:
+Explain what these results mean for a developer.
 
-{confirmed_relationships}
+Return exactly these four sections:
 
-The arrow "A -> B" means:
-A depends on B.
+1. Why this change has this level of risk
 
-Therefore:
-- The files on the LEFT side are the dependents.
-- The target file on the RIGHT side is the dependency.
-- These relationships are confirmed by the dependency analysis.
-- Never reverse these relationships.
+Explain the provided risk level using the risk score,
+impact count, hotspot score, and change type.
 
-All potentially affected files:
-{affected_files}
-Explain:
+2. What could potentially break if the change is introduced
 
-1. Why this change has this level of risk.
-2. Which architectural relationships contribute to the risk.
-3. What could potentially break if the change is introduced.
-4. What a developer should review before making the change.
-5. Give practical recommendations for reducing the risk.
+Explain possible consequences of introducing the change.
+Use words such as "could", "may", or "might".
+Do not claim that something will definitely break.
 
-Important rules:
+3. What a developer should review before making the change
 
-- Use only the dependency and impact evidence provided above.
-- Do not invent or assume dependency relationships.
-- Treat the confirmed dependency relationships as factual.
-- Interpret every arrow exactly as defined: A -> B means A depends on B.
-- Never reverse an arrow.
-- Never state that the target file depends on a file appearing on the left side of an arrow.
-- The target file is the dependency when it appears on the right side of an arrow.
-- Direct dependents are confirmed relationships.
-- All other breakage or consequences must be described as potential consequences.
-- Do not change or recalculate the risk score.
-- The risk score and risk level are produced by the deterministic analysis engine.
+Give practical things the developer should check before
+implementing the change.
 
-Recommendations must be specific to the software architecture evidence.
-Prefer recommendations such as:
-- reviewing the direct dependents of the changed component
-- checking API or interface compatibility
-- reviewing affected functions or classes
-- adding or updating tests for affected components
-- validating the dependency graph after the change
-- checking indirectly affected components
+4. Practical recommendations for reducing the risk
 
-Avoid generic business advice, deployment advice, or unrelated recommendations unless the evidence specifically supports them.
+Give practical recommendations such as testing,
+validation, compatibility checks, and reviewing the
+changed component.
 
-Keep the explanation concise, technically accurate, and practical.
+STRICT RULES
+
+- Do not discuss dependency relationships.
+- Do not discuss direct dependents.
+- Do not list files.
+- Do not invent architecture information.
+- Do not invent components.
+- Do not create an architectural relationship.
+- Do not reverse dependency relationships.
+- Do not recalculate the risk score.
+- Do not change the risk level.
+- Do not create additional sections.
+- Do not create a section called "Potentially Affected Components".
+- Do not create a section called "Architectural Relationships".
+- Keep the answer concise.
+- Use simple Markdown.
 """
 
     return prompt.strip()
@@ -140,43 +129,45 @@ Keep the explanation concise, technically accurate, and practical.
 
 def generate_ai_reasoning(simulation_result: dict) -> str:
     """
-    Send the simulation evidence to the local Ollama model
-    and return the generated architectural explanation.
+    Generate AI explanation from deterministic simulation results.
+
+    Dependency relationships are intentionally excluded from the
+    AI response. They are displayed separately by the frontend.
     """
 
-    prompt = build_reasoning_prompt(simulation_result)
-
-    response = chat(
-        model=OLLAMA_MODEL,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
+    prompt = build_reasoning_prompt(
+        simulation_result
     )
 
-    return response["message"]["content"]
+    try:
+        response = chat(
+            model=OLLAMA_MODEL,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            options={
+                "temperature": 0.2,
+            },
+        )
 
+        ai_reasoning = response[
+            "message"
+        ][
+            "content"
+        ].strip()
 
-def prepare_reasoning_input(simulation_result: dict) -> dict:
-    """
-    Convert simulation results into structured input
-    for the AI reasoning system.
-    """
+        if not ai_reasoning:
+            return (
+                "The local AI model did not return an explanation."
+            )
 
-    return {
-        "target_file": simulation_result.get("target_file"),
-        "change_type": simulation_result.get("change_type"),
-        "change_description": simulation_result.get(
-            "change_description"
-        ),
-        "impact_count": simulation_result.get("impact_count"),
-        "hotspot_score": simulation_result.get("hotspot_score"),
-        "risk_score": simulation_result.get("risk_score"),
-        "risk_level": simulation_result.get("risk_level"),
-        "affected_files": simulation_result.get(
-            "all_affected_files",
-            [],
-        ),
-    }
+        return ai_reasoning
+
+    except Exception as error:
+        return (
+            "The local AI reasoning engine could not generate "
+            "an explanation at this time."
+        )
