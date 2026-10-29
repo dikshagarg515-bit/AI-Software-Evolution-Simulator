@@ -1,9 +1,25 @@
+import pytest
+
 from fastapi.testclient import TestClient
 
 from backend.app.main import app
+from backend.app.auth import get_current_user
 
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def override_authentication():
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": 1,
+        "username": "test_user",
+        "email": "test@example.com",
+    }
+
+    yield
+
+    app.dependency_overrides.clear()
 
 
 def test_analyze_rejects_nonexistent_repository():
@@ -50,7 +66,10 @@ def test_simulate_rejects_invalid_change_type():
     response = client.get(
         "/simulate",
         params={
-            "path": r"C:\Users\Diksha\Documents\AI-Software-Evolution-Simulator",
+            "path": (
+                r"C:\Users\Diksha\Documents"
+                r"\AI-Software-Evolution-Simulator"
+            ),
             "file": "backend/app/main.py",
             "change_type": "invalid_change",
         },

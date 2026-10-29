@@ -14,19 +14,16 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 
+from backend.app.config import (
+    SECRET_KEY,
+    ALGORITHM,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+)
+
 from backend.app.database import (
     create_user,
     get_user_by_email,
 )
-
-
-SECRET_KEY = "ai-software-evolution-simulator-secret-key"
-
-ALGORITHM = "HS256"
-
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
-
-
 password_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto",
