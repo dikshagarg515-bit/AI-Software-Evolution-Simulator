@@ -9,3 +9,5 @@ node_modules/
 dist/
 build/
 backend/app/users.db
+frontend/public/Appbackup1.jsx
+frontend/src/Appbackup1.css

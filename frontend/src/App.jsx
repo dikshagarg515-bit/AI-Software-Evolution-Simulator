@@ -1,5 +1,60 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+import logo from "./assets/evolution-logo-clean.png";
+
+const icon = (children) => (
+  <svg
+    viewBox="0 0 24 24"
+    width="18"
+    height="18"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    {children}
+  </svg>
+);
+
+const NAV_ICONS = {
+  overview: icon(
+    <>
+      <rect x="3" y="3" width="7" height="7" rx="1.8" />
+      <rect x="14" y="3" width="7" height="7" rx="1.8" />
+      <rect x="3" y="14" width="7" height="7" rx="1.8" />
+      <rect x="14" y="14" width="7" height="7" rx="1.8" />
+    </>
+  ),
+  repository: icon(
+    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+  ),
+  dependencies: icon(
+    <>
+      <circle cx="6" cy="12" r="2.4" />
+      <circle cx="18" cy="6" r="2.4" />
+      <circle cx="18" cy="18" r="2.4" />
+      <path d="M8.2 11l7.6-4M8.2 13l7.6 4" />
+    </>
+  ),
+  hotspots: icon(
+    <path d="M12 3c.5 3.5 5 5 5 10a5 5 0 0 1-10 0c0-2 .8-3.3 2-4.4.1 1.8.9 2.7 2 3 .3-3-.5-5.3 1-8.6z" />
+  ),
+  impact: icon(
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1" />
+    </>
+  ),
+  simulation: icon(
+    <>
+      <path d="M3 17l6-6 4 4 8-8" />
+      <path d="M15 7h6v6" />
+    </>
+  ),
+};
 
 function App() {
   const [path, setPath] = useState(
@@ -50,12 +105,12 @@ const [loginError, setLoginError] = useState("");
 const [registerError, setRegisterError] = useState("");
 
   const navigation = [
-  { id: "overview", label: "Overview" },
-  { id: "repository", label: "Repository" },
-  { id: "dependencies", label: "Dependencies" },
-  { id: "hotspots", label: "Hotspots" },
-  { id: "impact", label: "Impact Analysis" },
-  { id: "simulation", label: "Evolution Simulation" },
+  { id: "overview", label: "Overview", icon: NAV_ICONS.overview },
+  { id: "repository", label: "Repository", icon: NAV_ICONS.repository },
+  { id: "dependencies", label: "Dependencies", icon: NAV_ICONS.dependencies },
+  { id: "hotspots", label: "Hotspots", icon: NAV_ICONS.hotspots },
+  { id: "impact", label: "Impact Analysis", icon: NAV_ICONS.impact },
+  { id: "simulation", label: "Evolution Simulation", icon: NAV_ICONS.simulation },
 ];
 
   // ================================
@@ -1000,7 +1055,9 @@ const handleRegister = async (event) => {
           <div className="simulation-summary">
             <div>
               <span>Risk Level</span>
-              <strong>
+              <strong
+          className={`risk-level risk-${String(simulationResult.risk_level).toLowerCase()}`}
+        >
                 {simulationResult.risk_level}
               </strong>
             </div>
@@ -1164,395 +1221,197 @@ const handleRegister = async (event) => {
   );
 
     // ================================
-  // Login Screen
+  // Login / Register Screen
   // ================================
-const renderLogin = () => (
-  <div
-    style={{
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "24px",
-      background: "#07070d",
-    }}
-  >
-    <div
-      style={{
-        width: "100%",
-        maxWidth: "540px",
-        padding: "46px",
-        borderRadius: "24px",
-        background: "#11101a",
-        border: "1px solid rgba(255,255,255,0.12)",
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        style={{
-          textAlign: "center",
-          marginBottom: "32px",
-        }}
-      >
-        <img
-          src="/src/assets/evolution-logo.png"
-          alt="Evolution Simulator"
-          style={{
-            width: "250px",
-            maxWidth: "80%",
-            marginBottom: "24px",
-          }}
-        />
-
-        <h1
-          style={{
-            margin: "0 0 10px",
-            color: "#ffffff",
-            fontSize: "36px",
-          }}
-        >
-          {authMode === "login"
-            ? "Welcome Back"
-            : "Create Account"}
-        </h1>
-
-        <p
-          style={{
-            margin: 0,
-            color: "#9b98ad",
-            fontSize: "17px",
-          }}
-        >
-          {authMode === "login"
-            ? "Sign in to access the Evolution Simulator"
-            : "Join the Evolution Simulator"}
-        </p>
-      </div>
-
-      {authMode === "login" ? (
-        <form onSubmit={handleLogin}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "10px",
-              color: "#ffffff",
-              fontWeight: 600,
-            }}
-          >
-            Email
-          </label>
-
-          <input
-            type="email"
-            value={loginEmail}
-            onChange={(event) =>
-              setLoginEmail(event.target.value)
-            }
-            placeholder="Enter your email"
-            required
-            style={{
-              width: "100%",
-              padding: "18px",
-              marginBottom: "24px",
-              borderRadius: "12px",
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "#08080d",
-              color: "#ffffff",
-              fontSize: "18px",
-              boxSizing: "border-box",
-            }}
+  const renderLogin = () => (
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-header">
+          <img
+            src={logo}
+            alt="Evolution Simulator"
+            className="auth-logo"
           />
 
-          <label
-            style={{
-              display: "block",
-              marginBottom: "10px",
-              color: "#ffffff",
-              fontWeight: 600,
-            }}
-          >
-            Password
-          </label>
-
-          <input
-            type="password"
-            value={loginPassword}
-            onChange={(event) =>
-              setLoginPassword(event.target.value)
-            }
-            placeholder="Enter your password"
-            required
-            style={{
-              width: "100%",
-              padding: "18px",
-              marginBottom: "18px",
-              borderRadius: "12px",
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "#08080d",
-              color: "#ffffff",
-              fontSize: "18px",
-              boxSizing: "border-box",
-            }}
-          />
-
-          {loginError && (
-            <p
-              style={{
-                color: loginError.includes("successfully")
-                  ? "#43d17a"
-                  : "#ff6b6b",
-                marginBottom: "16px",
-              }}
-            >
-              {loginError}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loginLoading}
-            style={{
-              width: "100%",
-              padding: "18px",
-              border: "none",
-              borderRadius: "12px",
-              background: "#20c5dc",
-              color: "#050509",
-              fontSize: "18px",
-              fontWeight: 700,
-              cursor: loginLoading
-                ? "not-allowed"
-                : "pointer",
-            }}
-          >
-            {loginLoading
-              ? "Signing in..."
-              : "Sign In"}
-          </button>
-
-          <p
-            style={{
-              textAlign: "center",
-              marginTop: "24px",
-              color: "#9b98ad",
-            }}
-          >
-            New user?{" "}
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode("register");
-                setLoginError("");
-              }}
-              style={{
-                border: "none",
-                background: "none",
-                color: "#20c5dc",
-                fontWeight: 700,
-                cursor: "pointer",
-                fontSize: "inherit",
-              }}
-            >
-              Create an account
-            </button>
-          </p>
-        </form>
-      ) : (
-        <form onSubmit={handleRegister}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "10px",
-              color: "#ffffff",
-              fontWeight: 600,
-            }}
-          >
-            Username
-          </label>
-
-          <input
-            type="text"
-            value={registerUsername}
-            onChange={(event) =>
-              setRegisterUsername(event.target.value)
-            }
-            placeholder="Choose a username"
-            required
-            style={{
-              width: "100%",
-              padding: "18px",
-              marginBottom: "20px",
-              borderRadius: "12px",
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "#08080d",
-              color: "#ffffff",
-              fontSize: "18px",
-              boxSizing: "border-box",
-            }}
-          />
-
-          <label
-            style={{
-              display: "block",
-              marginBottom: "10px",
-              color: "#ffffff",
-              fontWeight: 600,
-            }}
-          >
-            Email
-          </label>
-
-          <input
-            type="email"
-            value={registerEmail}
-            onChange={(event) =>
-              setRegisterEmail(event.target.value)
-            }
-            placeholder="Enter your email"
-            required
-            style={{
-              width: "100%",
-              padding: "18px",
-              marginBottom: "20px",
-              borderRadius: "12px",
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "#08080d",
-              color: "#ffffff",
-              fontSize: "18px",
-              boxSizing: "border-box",
-            }}
-          />
-
-          <label
-            style={{
-              display: "block",
-              marginBottom: "10px",
-              color: "#ffffff",
-              fontWeight: 600,
-            }}
-          >
-            Password
-          </label>
-
-          <input
-            type="password"
-            value={registerPassword}
-            onChange={(event) =>
-              setRegisterPassword(event.target.value)
-            }
-            placeholder="Create a password"
-            required
-            style={{
-              width: "100%",
-              padding: "18px",
-              marginBottom: "20px",
-              borderRadius: "12px",
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "#08080d",
-              color: "#ffffff",
-              fontSize: "18px",
-              boxSizing: "border-box",
-            }}
-          />
-
-          <label
-            style={{
-              display: "block",
-              marginBottom: "10px",
-              color: "#ffffff",
-              fontWeight: 600,
-            }}
-          >
-            Confirm Password
-          </label>
-
-          <input
-            type="password"
-            value={registerConfirmPassword}
-            onChange={(event) =>
-              setRegisterConfirmPassword(
-                event.target.value
-              )
-            }
-            placeholder="Confirm your password"
-            required
-            style={{
-              width: "100%",
-              padding: "18px",
-              marginBottom: "18px",
-              borderRadius: "12px",
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "#08080d",
-              color: "#ffffff",
-              fontSize: "18px",
-              boxSizing: "border-box",
-            }}
-          />
-
-          {registerError && (
-            <p
-              style={{
-                color: "#ff6b6b",
-                marginBottom: "16px",
-              }}
-            >
-              {registerError}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={registerLoading}
-            style={{
-              width: "100%",
-              padding: "18px",
-              border: "none",
-              borderRadius: "12px",
-              background: "#20c5dc",
-              color: "#050509",
-              fontSize: "18px",
-              fontWeight: 700,
-              cursor: registerLoading
-                ? "not-allowed"
-                : "pointer",
-            }}
-          >
-            {registerLoading
-              ? "Creating account..."
+          <h1>
+            {authMode === "login"
+              ? "Welcome Back"
               : "Create Account"}
-          </button>
+          </h1>
 
-          <p
-            style={{
-              textAlign: "center",
-              marginTop: "24px",
-              color: "#9b98ad",
-            }}
-          >
-            Already have an account?{" "}
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode("login");
-                setRegisterError("");
-              }}
-              style={{
-                border: "none",
-                background: "none",
-                color: "#20c5dc",
-                fontWeight: 700,
-                cursor: "pointer",
-                fontSize: "inherit",
-              }}
-            >
-              Sign In
-            </button>
+          <p>
+            {authMode === "login"
+              ? "Sign in to access the Evolution Simulator"
+              : "Join the Evolution Simulator"}
           </p>
-        </form>
-      )}
+        </div>
+
+        {authMode === "login" ? (
+          <form onSubmit={handleLogin}>
+            <div className="auth-field">
+              <label htmlFor="login-email">Email</label>
+              <input
+                id="login-email"
+                type="email"
+                autoComplete="email"
+                value={loginEmail}
+                onChange={(event) =>
+                  setLoginEmail(event.target.value)
+                }
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="login-password">Password</label>
+              <input
+                id="login-password"
+                type="password"
+                autoComplete="current-password"
+                value={loginPassword}
+                onChange={(event) =>
+                  setLoginPassword(event.target.value)
+                }
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+
+            {loginError && (
+              <p
+                className={`auth-message ${
+                  loginError.includes("successfully")
+                    ? "success"
+                    : "error"
+                }`}
+              >
+                {loginError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="auth-submit"
+              disabled={loginLoading}
+            >
+              {loginLoading ? "Signing in..." : "Sign In"}
+            </button>
+
+            <p className="auth-switch">
+              New user?{" "}
+              <button
+                type="button"
+                className="auth-link"
+                onClick={() => {
+                  setAuthMode("register");
+                  setLoginError("");
+                }}
+              >
+                Create an account
+              </button>
+            </p>
+          </form>
+        ) : (
+          <form onSubmit={handleRegister}>
+            <div className="auth-field">
+              <label htmlFor="register-username">Username</label>
+              <input
+                id="register-username"
+                type="text"
+                autoComplete="username"
+                value={registerUsername}
+                onChange={(event) =>
+                  setRegisterUsername(event.target.value)
+                }
+                placeholder="Choose a username"
+                required
+              />
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="register-email">Email</label>
+              <input
+                id="register-email"
+                type="email"
+                autoComplete="email"
+                value={registerEmail}
+                onChange={(event) =>
+                  setRegisterEmail(event.target.value)
+                }
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="register-password">Password</label>
+              <input
+                id="register-password"
+                type="password"
+                autoComplete="new-password"
+                value={registerPassword}
+                onChange={(event) =>
+                  setRegisterPassword(event.target.value)
+                }
+                placeholder="Create a password"
+                required
+              />
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="register-confirm">
+                Confirm Password
+              </label>
+              <input
+                id="register-confirm"
+                type="password"
+                autoComplete="new-password"
+                value={registerConfirmPassword}
+                onChange={(event) =>
+                  setRegisterConfirmPassword(
+                    event.target.value
+                  )
+                }
+                placeholder="Confirm your password"
+                required
+              />
+            </div>
+
+            {registerError && (
+              <p className="auth-message error">
+                {registerError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="auth-submit"
+              disabled={registerLoading}
+            >
+              {registerLoading
+                ? "Creating account..."
+                : "Create Account"}
+            </button>
+
+            <p className="auth-switch">
+              Already have an account?{" "}
+              <button
+                type="button"
+                className="auth-link"
+                onClick={() => {
+                  setAuthMode("login");
+                  setRegisterError("");
+                }}
+              >
+                Sign In
+              </button>
+            </p>
+          </form>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
 
   const renderCurrentPage = () => {
     if (!result) {
@@ -1593,17 +1452,8 @@ const renderLogin = () => (
 
     if (authChecking) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#08070f",
-          color: "#ffffff",
-          fontSize: "18px",
-        }}
-      >
+      <div className="auth-loading">
+        <span className="auth-spinner" />
         Checking authentication...
       </div>
     );
@@ -1622,7 +1472,7 @@ const renderLogin = () => (
       >
         <div className="sidebar-brand">
   <img
-    src="/src/assets/evolution-logo.png"
+    src={logo}
     alt="Evolution Simulator"
     className="sidebar-logo"
   />
@@ -1663,11 +1513,8 @@ const renderLogin = () => (
 
           <button
             type="button"
+            className="logout-button"
             onClick={handleLogout}
-            style={{
-              marginTop: "14px",
-              width: "100%",
-            }}
           >
             Logout
           </button>
