@@ -1,26 +1,27 @@
-from fastapi import FastAPI, Depends, HTTPException
+from pathlib import Path
+
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from analyzer.core.impact_analysis import find_impact
+from analyzer.core.ai_reasoning import generate_ai_reasoning
 from analyzer.core.dependency_graph import build_dependency_graph
 from analyzer.core.dependency_metrics import (
     calculate_dependency_metrics,
     rank_architectural_hotspots,
 )
 from analyzer.core.evolution_engine import simulate_change
+from analyzer.core.impact_analysis import find_impact
 from analyzer.core.repository_scanner import scan_repository
-from analyzer.core.ai_reasoning import generate_ai_reasoning
-from backend.app.config import FRONTEND_URLS, PROJECT_NAME
 from backend.app.auth import (
-    router as auth_router,
     get_current_user,
+    router as auth_router,
 )
+from backend.app.config import FRONTEND_URLS, PROJECT_NAME
 from backend.app.database import initialize_database
-from pathlib import Path
-from fastapi import HTTPException
 
 
 app = FastAPI(title=PROJECT_NAME)
+
 initialize_database()
 
 app.include_router(auth_router)
@@ -35,6 +36,72 @@ app.add_middleware(
 )
 
 
+def validate_repository_path(path: str) -> Path:
+    repository_path = Path(path)
+
+    if not repository_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="Repository path does not exist.",
+        )
+
+    if not repository_path.is_dir():
+        raise HTTPException(
+            status_code=400,
+            detail="The provided path is not a directory.",
+        )
+
+    return repository_path
+
+
+def analyze_repository_structure(path: str):
+    validate_repository_path(path)
+
+    repository = scan_repository(path)
+
+    if repository.total_files == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="No supported Python files were found in the repository.",
+        )
+
+    dependency_graph = build_dependency_graph(repository)
+    dependency_metrics = calculate_dependency_metrics(
+        dependency_graph
+    )
+
+    return (
+        repository,
+        dependency_graph,
+        dependency_metrics,
+    )
+
+
+def build_target_file(repository_path: str, file: str) -> str:
+    return (
+        repository_path + "\\" + file
+    ).replace("/", "\\")
+
+
+def validate_target_file(
+    dependency_graph: dict[str, list[str]],
+    repository_path: str,
+    file: str,
+) -> str:
+    target_file = build_target_file(
+        repository_path,
+        file,
+    )
+
+    if target_file not in dependency_graph:
+        raise HTTPException(
+            status_code=404,
+            detail="The requested file was not found in the repository.",
+        )
+
+    return target_file
+
+
 @app.get("/")
 def root():
     return {
@@ -47,33 +114,11 @@ def analyze_repository(
     path: str,
     current_user=Depends(get_current_user),
 ):
-    repository_path = Path(path)
-
-    if not repository_path.exists():
-        raise HTTPException(
-            status_code=404,
-            detail="Repository path does not exist.",
-        )
-
-    if not repository_path.is_dir():
-        raise HTTPException(
-            status_code=400,
-            detail="The provided path is not a directory.",
-        )
-
-    repository = scan_repository(path)
-
-    if repository.total_files == 0:
-        raise HTTPException(
-            status_code=400,
-            detail="No supported Python files were found in the repository.",
-        )
-
-    dependency_graph = build_dependency_graph(repository)
-
-    dependency_metrics = calculate_dependency_metrics(
-        dependency_graph
-    )
+    (
+        repository,
+        dependency_graph,
+        dependency_metrics,
+    ) = analyze_repository_structure(path)
 
     hotspot_ranking = rank_architectural_hotspots(
         dependency_metrics
@@ -86,46 +131,31 @@ def analyze_repository(
 
     return result
 
+
 @app.get("/impact")
 def analyze_impact(
     path: str,
     file: str,
     current_user=Depends(get_current_user),
 ):
-    repository_path = Path(path)
+    (
+        repository,
+        dependency_graph,
+        dependency_metrics,
+    ) = analyze_repository_structure(path)
 
-    if not repository_path.exists():
-        raise HTTPException(
-            status_code=404,
-            detail="Repository path does not exist.",
-        )
+    target_file = validate_target_file(
+        dependency_graph,
+        repository.path,
+        file,
+    )
 
-    if not repository_path.is_dir():
-        raise HTTPException(
-            status_code=400,
-            detail="The provided path is not a directory.",
-        )
-
-    repository = scan_repository(path)
-    dependency_graph = build_dependency_graph(repository)
-
-    target_file = (
-        repository.path + "\\" + file
-    ).replace("/", "\\")
-
-    if target_file not in dependency_graph:
-        raise HTTPException(
-            status_code=404,
-            detail="The requested file was not found in the repository.",
-        )
-
-    impact = find_impact(
+    return find_impact(
         dependency_graph,
         target_file,
     )
 
-    return impact
-@app.get("/simulate")
+
 @app.get("/simulate")
 def simulate_repository_change(
     path: str,
@@ -151,35 +181,17 @@ def simulate_repository_change(
             ),
         )
 
-    repository_path = Path(path)
+    (
+        repository,
+        dependency_graph,
+        dependency_metrics,
+    ) = analyze_repository_structure(path)
 
-    if not repository_path.exists():
-        raise HTTPException(
-            status_code=404,
-            detail="Repository path does not exist.",
-        )
-
-    if not repository_path.is_dir():
-        raise HTTPException(
-            status_code=400,
-            detail="The provided path is not a directory.",
-        )
-
-    repository = scan_repository(path)
-    dependency_graph = build_dependency_graph(repository)
-    dependency_metrics = calculate_dependency_metrics(
-        dependency_graph
+    target_file = validate_target_file(
+        dependency_graph,
+        repository.path,
+        file,
     )
-
-    target_file = (
-        repository.path + "\\" + file
-    ).replace("/", "\\")
-
-    if target_file not in dependency_graph:
-        raise HTTPException(
-            status_code=404,
-            detail="The requested file was not found in the repository.",
-        )
 
     impact_result = find_impact(
         dependency_graph,
@@ -193,7 +205,8 @@ def simulate_repository_change(
         change_type,
     )
 
-    ai_reasoning = generate_ai_reasoning(simulation)
-    simulation["ai_reasoning"] = ai_reasoning
+    simulation["ai_reasoning"] = generate_ai_reasoning(
+        simulation
+    )
 
     return simulation
