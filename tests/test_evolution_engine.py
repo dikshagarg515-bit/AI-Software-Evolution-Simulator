@@ -113,3 +113,24 @@ def test_high_risk_api_change_is_detected():
     assert simulation["risk_score"] == 7
     assert simulation["impact_count"] == 2
     assert simulation["hotspot_score"] == 2
+def test_invalid_change_type_is_rejected():
+    repository = create_test_repository()
+
+    graph = build_dependency_graph(repository)
+    metrics = calculate_dependency_metrics(graph)
+
+    impact = find_impact(
+        graph,
+        "project/core/models.py",
+    )
+
+    try:
+        simulate_change(
+            target_file="project/core/models.py",
+            impact_result=impact,
+            dependency_metrics=metrics,
+            change_type="invalid_change",
+        )
+        assert False, "Expected ValueError for invalid change type"
+    except ValueError as error:
+        assert str(error) == "Invalid change type: invalid_change"

@@ -22,6 +22,11 @@ def simulate_change(
     dependency_metrics: dict[str, dict],
     change_type: str = "modify_function",
 ) -> dict:
+    if change_type not in CHANGE_TYPE_WEIGHTS:
+        raise ValueError(
+            f"Invalid change type: {change_type}"
+        )
+
     metrics = dependency_metrics.get(
         target_file,
         {
@@ -36,10 +41,7 @@ def simulate_change(
     impact_count = impact_result["impact_count"]
     hotspot_score = metrics["hotspot_score"]
 
-    change_weight = CHANGE_TYPE_WEIGHTS.get(
-        change_type,
-        0,
-    )
+    change_weight = CHANGE_TYPE_WEIGHTS[change_type]
 
     risk_score = (
         impact_count
@@ -81,10 +83,7 @@ def simulate_change(
     return {
         "target_file": target_file,
         "change_type": change_type,
-        "change_description": CHANGE_TYPE_DESCRIPTIONS.get(
-            change_type,
-            "Unknown change type.",
-        ),
+        "change_description": CHANGE_TYPE_DESCRIPTIONS[change_type],
         "impact_count": impact_count,
         "hotspot_score": hotspot_score,
         "change_weight": change_weight,
